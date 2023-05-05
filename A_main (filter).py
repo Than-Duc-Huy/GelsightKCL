@@ -84,7 +84,7 @@ while True:
 
     """
 
-    # Apply GH filter to line
+    # Apply GH filter
     if slope == None:
         print("No measurement")
         cv2.destroyWindow("Filtered")

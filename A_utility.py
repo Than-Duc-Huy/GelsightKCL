@@ -2,6 +2,7 @@ from calendar import c
 import cv2
 import numpy as np
 import setting
+import filterpy.kalman
 
 FUNCTIONS = [
     "get_processed_frame",
@@ -92,8 +93,6 @@ def inpaint(frame):
         frame, mask, 7, cv2.INPAINT_TELEA
     )  # Inpain the white area in the mask (aka the marker). The number is the pixel neighborhood radius
 
-    # cv2.imshow("frame_marker_removed", frame_marker_removed)
-
     return frame_marker_removed
 
 
@@ -112,8 +111,6 @@ def difference(frame, frame0, debug=False):
     diff_uint8[diff_uint8 <= 140] = 0
 
     diff_gray = cv2.cvtColor(diff_uint8, cv2.COLOR_BGR2GRAY)
-
-    # diff_gray = 255 - diff_gray
 
     _, diff_thresh = cv2.threshold(
         diff_gray, 50, 255, cv2.THRESH_BINARY
@@ -170,7 +167,6 @@ def get_all_contour(diff_thresh_dilate, frame, debug=False):
 
 
 def regress_line(all_points, frame, debug=False):
-    # line_frame = frame.copy()
     line_frame = frame  # Draw on top of the original frame
     vx, vy, x, y = cv2.fitLine(all_points, cv2.DIST_L2, 0, 0.01, 0.01)
 
@@ -210,7 +206,7 @@ def regress_line(all_points, frame, debug=False):
     )
     if debug:
         cv2.imshow("Line", line_frame)
-    return slope, (midy, midx)
+    return slope, (midx, midy)
 
 
 def get_convex_hull_area(diff_thresh_dilate, frame, debug=False):
@@ -236,7 +232,9 @@ def get_convex_hull_area(diff_thresh_dilate, frame, debug=False):
 
             cv2.drawContours(img_hull, [hullPoints], -1, (0, 255, 0), 2)
             hull_area = cv2.contourArea(hullPoints)
-            slope, center = regress_line(hull, img_hull, debug=False)
+            slope, center = regress_line(
+                hull, img_hull, debug=False
+            )  # Draw the regressed line
 
             cv2.fillPoly(hull_mask, pts=[hullPoints], color=(255, 255, 255))
         except Exception as e:

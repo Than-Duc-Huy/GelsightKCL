@@ -1,6 +1,6 @@
 Getting started with Gelsight sensor traditional CV processing
 
-# Marker Tracking
+## Marker Tracking
 
 Adapted from https://github.com/GelSight/tracking
 
