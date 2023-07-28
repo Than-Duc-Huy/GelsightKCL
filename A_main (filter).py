@@ -7,7 +7,7 @@ import time
 from filterpy.gh import GHFilter
 
 ##====== CAMERA CAPTURE W x H  = 800 x 600
-cam = cv2.VideoCapture(4)  ## Webcam index here
+cam = cv2.VideoCapture(0)  ## Webcam index here
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
 print("W x H", cam.get(cv2.CAP_PROP_FRAME_WIDTH), cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -54,6 +54,8 @@ while True:
         contact_area_dilated, frame, debug=True
     )  # Hull area and slope
 
+    ## Get Angle
+
     ## Marker
     m_centers = A_utility.marker_center(frame, debug=False)
     m.init(m_centers)
@@ -81,6 +83,73 @@ while True:
     contact_area_dilated
 
     """
+
+    # Apply GH filter
+    if slope == None:
+        print("No measurement")
+        cv2.destroyWindow("Filtered")
+        filter_init = 0
+    else:
+        filter_init += 1
+        if filter_init == 1:  # Init filter
+            x0 = np.array([slope, center[0], center[1]])
+            dx0 = np.array([0, 0, 0])
+            filter = GHFilter(
+                x=x0,
+                dx=dx0,
+                dt=1,
+                g=G_coeff,
+                h=H_coeff,
+            )
+        else:
+            measurements = np.array([slope, center[0], center[1]])
+            filter.update(z=measurements)
+            state_estimate = filter.x
+            print("state_estimate", state_estimate)
+            filter_output = frame.copy()
+            filtered_center = (int(state_estimate[1]), int(state_estimate[2]))
+            filtered_slope = state_estimate[0]
+            cv2.circle(filter_output, filtered_center, 5, (255, 0, 0), -1)
+            cv2.putText(
+                filter_output,
+                f"filtered (x,y) = {filtered_center}",
+                (10, 30),
+                0,
+                0.5,
+                (255, 0, 0),
+                2,
+            )
+            cv2.putText(
+                filter_output,
+                f"filtered slope = {filtered_slope}",
+                (10, 60),
+                0,
+                0.5,
+                (255, 0, 0),
+                2,
+            )
+
+            filtered_line_pt1 = (
+                int(filtered_center[0] - 1000),
+                int(filtered_center[1] - 1000 * filtered_slope),
+            )
+
+            filtered_line_pt2 = (
+                int(filtered_center[0] + 1000),
+                int(filtered_center[1] + 1000 * filtered_slope),
+            )
+            cv2.line(
+                filter_output, filtered_line_pt1, filtered_line_pt2, (255, 0, 0), 2
+            )
+
+            cv2.imshow("Filtered", filter_output)
+
+            """
+            This give you:
+
+            filtered_center
+            filtered_slope
+            """
 
     # Show frame
     if True:
