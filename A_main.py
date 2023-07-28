@@ -14,7 +14,7 @@ print("W x H", cam.get(cv2.CAP_PROP_FRAME_WIDTH), cam.get(cv2.CAP_PROP_FRAME_HEI
 
 ## Init marker tracking components
 setting.init()
-m = find_marker.Matching(  # Instance of th find_marker library
+m = find_marker.Matching(  # Instance of the find_marker library
     N_=setting.N_,
     M_=setting.M_,
     fps_=setting.fps_,
